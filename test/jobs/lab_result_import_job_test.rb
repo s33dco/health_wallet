@@ -11,6 +11,18 @@ class LabResultImportJobTest < ActiveSupport::TestCase
     lab_import
   end
 
+  # Runs the block with Rails.logger swapped for one writing to a string, and returns what
+  # was logged.
+  def capture_logs
+    buffer = StringIO.new
+    original = Rails.logger
+    Rails.logger = ActiveSupport::Logger.new(buffer)
+    yield
+    buffer.string
+  ensure
+    Rails.logger = original
+  end
+
   test "processes a valid file, imports records, and marks the import completed" do
     lab_import = lab_import_with("John Doe|1985-03-15|M|REF-2024-001\n8480-6|120|mmHg\n")
 
@@ -54,5 +66,22 @@ class LabResultImportJobTest < ActiveSupport::TestCase
     assert lab_import.reload.failed?
     assert_match(/Parse error/, lab_import.error_message)
     assert_equal 0, Patient.count
+  end
+
+  test "emits structured log events for a successful import" do
+    lab_import = lab_import_with("John Doe|1985-03-15|M|REF-2024-001\n8480-6|120|mmHg\n")
+
+    logs = capture_logs { LabResultImportJob.perform_now(lab_import.id) }
+
+    assert_match(/"event":"import_started"/, logs)
+    assert_match(/"event":"import_completed"/, logs)
+  end
+
+  test "logs a parse error event on bad input" do
+    lab_import = lab_import_with("John Doe|1985-03-15|M|REF-2024-001\n9999-9|120|mmHg\n")
+
+    logs = capture_logs { LabResultImportJob.perform_now(lab_import.id) }
+
+    assert_match(/"event":"import_parse_error"/, logs)
   end
 end
