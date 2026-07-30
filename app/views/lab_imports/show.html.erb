@@ -1,0 +1,26 @@
+<% unless @lab_import.completed? || @lab_import.failed? %>
+  <%# Poll while the background job is still running; stop once it reaches a terminal state. %>
+  <% content_for :head do %>
+    <meta http-equiv="refresh" content="2">
+  <% end %>
+<% end %>
+
+<div class="lab-import">
+  <div class="lab-import-header">
+    <%= link_to "← Upload another file", new_lab_import_path, class: "back-link" %>
+    <h1>Import Status</h1>
+  </div>
+
+  <p class="status status--<%= @lab_import.status %>">
+    Status: <strong><%= @lab_import.status.humanize %></strong>
+  </p>
+
+  <% if @lab_import.pending? || @lab_import.processing? %>
+    <p class="notice">This page refreshes automatically while the import runs…</p>
+  <% elsif @lab_import.failed? %>
+    <div class="flash-alert"><%= @lab_import.error_message %></div>
+  <% elsif @lab_import.completed? %>
+    <p class="notice">Import complete. The results are now on the patients' assessment pages.</p>
+    <%= link_to "View Patients", patients_path, class: "btn btn-primary" %>
+  <% end %>
+</div>
