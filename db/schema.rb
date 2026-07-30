@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_07_30_153000) do
+ActiveRecord::Schema[8.1].define(version: 2026_07_30_160000) do
   create_table "active_storage_attachments", force: :cascade do |t|
     t.bigint "blob_id", null: false
     t.datetime "created_at", null: false
@@ -42,9 +42,11 @@ ActiveRecord::Schema[8.1].define(version: 2026_07_30_153000) do
   create_table "lab_imports", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.text "error_message"
+    t.string "file_checksum"
     t.integer "status", default: 0, null: false
     t.text "summary"
     t.datetime "updated_at", null: false
+    t.index ["file_checksum"], name: "index_lab_imports_on_file_checksum"
   end
 
   add_foreign_key "active_storage_attachments", "active_storage_blobs", column: "blob_id"

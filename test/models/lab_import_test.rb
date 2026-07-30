@@ -6,7 +6,7 @@ class LabImportTest < ActiveSupport::TestCase
   end
 
   test "exposes a predicate method for every defined status" do
-    %i[pending processing completed failed].each do |status|
+    %i[pending processing completed failed duplicate].each do |status|
       assert LabImport.new(status: status).public_send("#{status}?"),
              "expected #{status}? to be true when status is #{status}"
     end
@@ -60,6 +60,44 @@ class LabImportTest < ActiveSupport::TestCase
 
     assert_equal 1, LabImport.completed.count
     assert_equal 2, LabImport.failed.count
+  end
+
+  # --- duplicate detection ---
+
+  test "duplicate_of finds a prior completed import with the same checksum" do
+    original = LabImport.create!(status: :completed, file_checksum: "abc123")
+    incoming = LabImport.create!(status: :pending, file_checksum: "abc123")
+
+    assert_equal original, incoming.duplicate_of
+  end
+
+  test "duplicate_of only matches completed imports, not failed or pending ones" do
+    LabImport.create!(status: :failed, file_checksum: "abc123") # never completed
+    incoming = LabImport.create!(status: :pending, file_checksum: "abc123")
+
+    assert_nil incoming.duplicate_of # a prior failure shouldn't block a genuine retry
+  end
+
+  test "duplicate_of returns nil when no matching checksum exists" do
+    LabImport.create!(status: :completed, file_checksum: "different")
+    incoming = LabImport.create!(status: :pending, file_checksum: "abc123")
+
+    assert_nil incoming.duplicate_of
+  end
+
+  test "duplicate_of returns nil when the checksum is blank" do
+    LabImport.create!(status: :completed, file_checksum: "abc123")
+    incoming = LabImport.create!(status: :pending)
+
+    assert_nil incoming.duplicate_of
+  end
+
+  test "mark_duplicate! transitions to duplicate" do
+    lab_import = LabImport.create!(status: :pending)
+
+    lab_import.mark_duplicate!
+
+    assert lab_import.reload.duplicate?
   end
 
   test "accepts an attached file" do

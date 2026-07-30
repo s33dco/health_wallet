@@ -1,4 +1,4 @@
-<% unless @lab_import.completed? || @lab_import.failed? %>
+<% if @lab_import.pending? || @lab_import.processing? %>
   <%# Poll while the background job is still running; stop once it reaches a terminal state. %>
   <% content_for :head do %>
     <meta http-equiv="refresh" content="2">
@@ -19,6 +19,9 @@
     <p class="notice">This page refreshes automatically while the import runs…</p>
   <% elsif @lab_import.failed? %>
     <div class="flash-alert"><%= @lab_import.error_message %></div>
+  <% elsif @lab_import.duplicate? %>
+    <p class="notice">This file matches a previously completed import and was skipped, so no records were changed.</p>
+    <%= link_to "View Patients", patients_path, class: "btn btn-primary" %>
   <% elsif @lab_import.completed? %>
     <p class="notice">Import complete. The results are now on the patients' assessment pages.</p>
 

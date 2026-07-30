@@ -14,12 +14,14 @@ class LabImport < ApplicationRecord
     pending:    0,
     processing: 1,
     completed:  2,
-    failed:     3
+    failed:     3,
+    duplicate:  4
   }, default: :pending
 
-  # Lifecycle transitions. `mark_processing!` uses the enum's bang method; the others also
-  # persist a second attribute (the summary or the error) in the same write.
+  # Lifecycle transitions. `mark_processing!`/`mark_duplicate!` use the enum's bang methods;
+  # the others also persist a second attribute (the summary or the error) in the same write.
   def mark_processing! = processing!
+  def mark_duplicate!  = duplicate!
 
   def mark_completed!(summary = nil)
     update!(status: :completed, summary: summary)
@@ -27,5 +29,13 @@ class LabImport < ApplicationRecord
 
   def mark_failed!(message)
     update!(status: :failed, error_message: message)
+  end
+
+  # A previously completed import of the same file (by checksum). Only completed imports
+  # count, so a prior failure or duplicate never blocks a genuine retry.
+  def duplicate_of
+    return nil if file_checksum.blank?
+
+    LabImport.completed.where(file_checksum: file_checksum).where.not(id: id).first
   end
 end

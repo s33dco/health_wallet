@@ -56,6 +56,11 @@
   color: #991b1b;
 }
 
+.status--duplicate {
+  background: #e0e7ff;
+  color: #3730a3;
+}
+
 .notice {
   color: #555;
 }
