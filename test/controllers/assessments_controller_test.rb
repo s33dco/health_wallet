@@ -46,4 +46,30 @@ class AssessmentsControllerTest < ActionDispatch::IntegrationTest
     assert_response :success
     assert_select "details.obs-history", count: 0
   end
+
+  test "editing an observation value records it in the audit trail as a manual edit" do
+    observation = @assessment.observations.create!(code: "8480-6", name: "Blood Pressure (Systolic)")
+    observation.record_reading!(value: 120.0, units: "mmHg") # e.g. from an earlier import
+
+    patch assessment_url(@assessment), params: {
+      assessment: { observations_attributes: { "0" => { id: observation.id.to_s, value: "130", units: "mmHg" } } }
+    }
+
+    assert_redirected_to assessment_url(@assessment)
+    observation = @assessment.reload.observations.first
+    assert_equal 130.0, observation.value # current value updated
+    assert_equal 2, observation.observation_histories.count # prior reading preserved
+    assert observation.observation_histories.any? { |h| h.value == 130.0 && h.source == "manual_edit" }
+  end
+
+  test "re-saving the edit form without changes does not add to the audit trail" do
+    observation = @assessment.observations.create!(code: "8480-6", name: "Blood Pressure (Systolic)")
+    observation.record_reading!(value: 120.0, units: "mmHg")
+
+    patch assessment_url(@assessment), params: {
+      assessment: { observations_attributes: { "0" => { id: observation.id.to_s, value: "120.0", units: "mmHg" } } }
+    }
+
+    assert_equal 1, @assessment.reload.observations.first.observation_histories.count
+  end
 end

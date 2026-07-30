@@ -12,20 +12,32 @@ class AssessmentsController < ApplicationController
 
   def update
     @assessment = Assessment.find(params[:id])
+    apply_observation_edits(@assessment)
 
-    if @assessment.update(assessment_params)
-      redirect_to assessment_path(@assessment), notice: "Assessment updated successfully."
-    else
-      @patient = @assessment.patient
-      render :edit, status: :unprocessable_entity
-    end
+    redirect_to assessment_path(@assessment), notice: "Assessment updated successfully."
   end
 
   private
 
-  def assessment_params
-    params.require(:assessment).permit(
-      observations_attributes: [ :id, :value, :units ]
-    )
+  # Apply edited values through Observation#record_reading! rather than a blind nested
+  # update, so a manual correction is preserved in the audit trail just like an import is
+  # (tagged "manual_edit" to distinguish it from "hl7_import"). Unchanged rows are skipped
+  # so re-saving the form doesn't inflate the history.
+  def apply_observation_edits(assessment)
+    observation_edits.each do |attrs|
+      observation = assessment.observations.find(attrs[:id])
+      value = attrs[:value].to_f
+      units = attrs[:units]
+      next if observation.value == value && observation.units == units
+
+      observation.record_reading!(value: value, units: units, source: "manual_edit")
+    end
+  end
+
+  def observation_edits
+    params.require(:assessment)
+          .fetch(:observations_attributes, {})
+          .values
+          .map { |attrs| attrs.permit(:id, :value, :units) }
   end
 end
