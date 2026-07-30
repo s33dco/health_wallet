@@ -51,11 +51,14 @@ module Import
       observation = assessment.observations.where(code: obs.code).first
       if observation
         @stats[:observations_updated] += 1
-        observation.update!(value: obs.value, units: obs.units)
       else
         @stats[:observations_created] += 1
-        assessment.observations.create!(code: obs.code, name: obs.name, value: obs.value, units: obs.units)
+        observation = assessment.observations.create!(code: obs.code, name: obs.name)
       end
+
+      # Record the reading through the audit trail rather than overwriting in place, so a
+      # corrected/re-run value keeps its history instead of silently replacing the old one.
+      observation.record_reading!(value: obs.value, units: obs.units)
     end
   end
 end

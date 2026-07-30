@@ -49,6 +49,16 @@ module Import
       assert_in_delta 125.0, observation.value
     end
 
+    test "preserves history: a corrected value updates the current reading but keeps the trail" do
+      Import::Processor.new("John Doe|1985-03-15|M|REF-2024-001\n8480-6|120|mmHg\n").call
+      Import::Processor.new("John Doe|1985-03-15|M|REF-2024-001\n8480-6|125|mmHg\n").call # corrected
+
+      observation = Patient.first.assessments.first.observations.first
+      assert_in_delta 125.0, observation.value # current value reflects the latest reading
+      assert_equal 2, observation.observation_histories.count # both readings preserved
+      assert_equal [ 120.0, 125.0 ], observation.observation_histories.order_by(created_at: :asc).map(&:value)
+    end
+
     test "adds a new observation to an existing assessment" do
       Import::Processor.new("John Doe|1985-03-15|M|REF-2024-001\n8480-6|120|mmHg\n").call
       result = Import::Processor.new("John Doe|1985-03-15|M|REF-2024-001\n8462-4|80|mmHg\n").call
