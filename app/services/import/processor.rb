@@ -11,19 +11,22 @@ module Import
       :patients_created, :patients_matched,
       :assessments_created, :assessments_matched,
       :observations_created, :observations_updated,
-      keyword_init: true
+      :flagged, keyword_init: true
     )
+
+    COUNTERS = Result.members - [ :flagged ]
 
     def initialize(content)
       @content = content
       @stats = Hash.new(0)
+      @flagged = []
     end
 
     def call
       records = Hl7LabResultParser.parse(@content)
       records.each { |record| import_record(record) }
       # Read every counter through @stats (Hash.new(0)) so untouched ones report 0, not nil.
-      Result.new(**Result.members.index_with { |key| @stats[key] })
+      Result.new(**COUNTERS.index_with { |key| @stats[key] }, flagged: @flagged)
     end
 
     private
@@ -48,6 +51,8 @@ module Import
     end
 
     def import_observation(assessment, obs)
+      flag_if_out_of_range(obs)
+
       observation = assessment.observations.where(code: obs.code).first
       if observation
         @stats[:observations_updated] += 1
@@ -59,6 +64,15 @@ module Import
       # Record the reading through the audit trail rather than overwriting in place, so a
       # corrected/re-run value keeps its history instead of silently replacing the old one.
       observation.record_reading!(value: obs.value, units: obs.units)
+    end
+
+    # Flag readings outside the code's reference range, but still import them — an
+    # out-of-range value is clinically interesting, not invalid.
+    def flag_if_out_of_range(obs)
+      observation_code = ObservationCode.where(code: obs.code).first
+      return unless observation_code&.out_of_range?(obs.value, unit: obs.units)
+
+      @flagged << { code: obs.code, name: obs.name, value: obs.value, units: obs.units }
     end
   end
 end

@@ -3,8 +3,8 @@ require "test_helper"
 module Import
   class ProcessorTest < ActiveSupport::TestCase
     setup do
-      ObservationCode.create!(code: "8480-6", description: "Blood Pressure (Systolic)")
-      ObservationCode.create!(code: "8462-4", description: "Blood Pressure (Diastolic)")
+      ObservationCode.create!(code: "8480-6", description: "Blood Pressure (Systolic)", unit: "mmHg", min_value: 90, max_value: 180)
+      ObservationCode.create!(code: "8462-4", description: "Blood Pressure (Diastolic)", unit: "mmHg", min_value: 60, max_value: 120)
     end
 
     test "creates a new Patient, Assessment, and Observation on first import" do
@@ -90,6 +90,36 @@ module Import
       assert_equal 1, result.assessments_created
       assert_equal 1, Patient.count
       assert_equal 2, Patient.first.assessments.count
+    end
+
+    # --- out-of-range flagging ---
+
+    test "flags an out-of-range value without rejecting it" do
+      content = "John Doe|1985-03-15|M|REF-2024-001\n8480-6|250|mmHg\n" # above max_value 180
+
+      result = Import::Processor.new(content).call
+
+      assert_equal 1, result.flagged.length
+      assert_equal "8480-6", result.flagged.first[:code]
+      assert_equal 250.0, result.flagged.first[:value]
+      assert_equal 1, Patient.first.assessments.first.observations.count # still imported, not dropped
+    end
+
+    test "does not flag values within range" do
+      content = "John Doe|1985-03-15|M|REF-2024-001\n8480-6|120|mmHg\n8462-4|80|mmHg\n"
+
+      result = Import::Processor.new(content).call
+
+      assert_empty result.flagged
+    end
+
+    test "flags using unit conversion, so a normal Fahrenheit temperature is not flagged" do
+      ObservationCode.create!(code: "8310-5", description: "Body Temperature", unit: "°C", min_value: 36.0, max_value: 39.0)
+      content = "John Doe|1985-03-15|M|REF-2024-001\n8310-5|98.6|°F\n" # 98.6°F == 37°C, in range
+
+      result = Import::Processor.new(content).call
+
+      assert_empty result.flagged
     end
   end
 end

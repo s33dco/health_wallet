@@ -25,9 +25,22 @@
     <% if @lab_import.summary.present? %>
       <ul class="import-summary">
         <% @lab_import.summary.each do |key, value| %>
+          <% next if key == "flagged" %>
           <li><span class="import-summary-label"><%= key.to_s.humanize %>:</span> <%= value %></li>
         <% end %>
       </ul>
+
+      <% flagged = @lab_import.summary["flagged"] %>
+      <% if flagged.present? %>
+        <div class="flagged">
+          <p class="flagged-heading">⚠ Out-of-range results</p>
+          <ul class="flagged-list">
+            <% flagged.each do |result| %>
+              <li><%= result["name"] %>: <strong><%= result["value"] %> <%= result["units"] %></strong></li>
+            <% end %>
+          </ul>
+        </div>
+      <% end %>
     <% end %>
 
     <%= link_to "View Patients", patients_path, class: "btn btn-primary" %>
