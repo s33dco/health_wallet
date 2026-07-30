@@ -78,3 +78,29 @@ patients_data.each do |patient_attrs|
 end
 
 puts "Created #{Patient.count} patients with #{Assessment.count} assessments and #{Assessment.all.sum { |a| a.observations.count }} observations."
+
+# --- Observation code reference data (LOINC) ---------------------------------------
+# The importer only creates observations whose code appears in this controlled list.
+# Seeded idempotently so it is safe to re-run without clobbering existing records.
+puts "Seeding observation codes..."
+
+OBSERVATION_CODES = {
+  "8480-6"  => "Blood Pressure (Systolic)",
+  "8462-4"  => "Blood Pressure (Diastolic)",
+  "8867-4"  => "Heart Rate",
+  "8310-5"  => "Body Temperature",
+  "9279-1"  => "Respiratory Rate",
+  "2708-6"  => "Oxygen Saturation",
+  "29463-7" => "Body Weight",
+  "8302-2"  => "Body Height",
+  "2339-0"  => "Blood Glucose",
+  "2093-3"  => "Cholesterol"
+}.freeze
+
+OBSERVATION_CODES.each do |code, description|
+  ObservationCode.find_or_create_by!(code: code) do |oc|
+    oc.description = description
+  end
+end
+
+puts "Seeded #{ObservationCode.count} observation codes."
