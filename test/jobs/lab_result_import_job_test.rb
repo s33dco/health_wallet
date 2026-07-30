@@ -21,6 +21,17 @@ class LabResultImportJobTest < ActiveSupport::TestCase
     assert_equal 1, Patient.first.assessments.first.observations.count
   end
 
+  test "stores a structured summary of what the import did" do
+    lab_import = lab_import_with("John Doe|1985-03-15|M|REF-2024-001\n8480-6|120|mmHg\n")
+
+    LabResultImportJob.perform_now(lab_import.id)
+
+    summary = lab_import.reload.summary
+    assert_equal 1, summary["patients_created"]
+    assert_equal 1, summary["assessments_created"]
+    assert_equal 1, summary["observations_created"]
+  end
+
   test "marks the import failed with a parse-error message on bad input" do
     lab_import = lab_import_with("John Doe|1985-03-15|M|REF-2024-001\n9999-9|120|mmHg\n")
 

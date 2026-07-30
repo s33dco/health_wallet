@@ -7,9 +7,9 @@ class LabResultImportJob < ApplicationJob
     lab_import = LabImport.find(lab_import_id)
     lab_import.mark_processing!
 
-    Import::Processor.new(lab_import.file.download).call
+    result = Import::Processor.new(lab_import.file.download).call
 
-    lab_import.mark_completed!
+    lab_import.mark_completed!(result.to_h)
   rescue Hl7LabResultParser::ParseError => e
     # Bad input data — the file is rejected as designed. Recoverable, not an incident.
     lab_import.mark_failed!("Parse error: #{e.message}")

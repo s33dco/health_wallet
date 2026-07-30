@@ -21,6 +21,15 @@
     <div class="flash-alert"><%= @lab_import.error_message %></div>
   <% elsif @lab_import.completed? %>
     <p class="notice">Import complete. The results are now on the patients' assessment pages.</p>
+
+    <% if @lab_import.summary.present? %>
+      <ul class="import-summary">
+        <% @lab_import.summary.each do |key, value| %>
+          <li><span class="import-summary-label"><%= key.to_s.humanize %>:</span> <%= value %></li>
+        <% end %>
+      </ul>
+    <% end %>
+
     <%= link_to "View Patients", patients_path, class: "btn btn-primary" %>
   <% end %>
 </div>

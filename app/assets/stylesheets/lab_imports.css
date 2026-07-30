@@ -60,6 +60,24 @@
   color: #555;
 }
 
+.import-summary {
+  list-style: none;
+  padding: 0.75rem 1rem;
+  margin: 1rem 0;
+  background: #f9fafb;
+  border-radius: 4px;
+}
+
+.import-summary li {
+  padding: 2px 0;
+}
+
+.import-summary-label {
+  display: inline-block;
+  min-width: 180px;
+  color: #555;
+}
+
 .flash-alert {
   padding: 0.75rem 1rem;
   border-radius: 4px;

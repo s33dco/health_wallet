@@ -33,6 +33,17 @@ class LabImportTest < ActiveSupport::TestCase
     assert lab_import.reload.completed?
   end
 
+  test "mark_completed! stores the summary, round-tripping through JSON" do
+    lab_import = LabImport.create!(status: :processing)
+
+    lab_import.mark_completed!(patients_created: 1, observations_updated: 3)
+
+    assert lab_import.completed?
+    summary = lab_import.reload.summary
+    assert_equal 1, summary["patients_created"] # string keys after JSON round-trip
+    assert_equal 3, summary["observations_updated"]
+  end
+
   test "mark_failed! transitions to failed and stores the error message" do
     lab_import = LabImport.create!(status: :processing)
 
