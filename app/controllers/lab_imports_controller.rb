@@ -1,4 +1,14 @@
 class LabImportsController < ApplicationController
+  PER_PAGE = 15
+
+  def index
+    # Eager-load the attachment so listing filenames doesn't trigger a query per row.
+    scope = LabImport.with_attached_file.order(created_at: :desc)
+    @total_pages = [ (scope.count / PER_PAGE.to_f).ceil, 1 ].max
+    @page = params[:page].to_i.clamp(1, @total_pages)
+    @lab_imports = scope.offset((@page - 1) * PER_PAGE).limit(PER_PAGE)
+  end
+
   def new
     @lab_import = LabImport.new
   end

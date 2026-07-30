@@ -46,3 +46,23 @@
   transform: translateY(-2px);
   box-shadow: var(--shadow-primary);
 }
+
+.home-actions {
+  display: flex;
+  gap: var(--spacing-md);
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.home-secondary-link {
+  display: inline-block;
+  margin-top: var(--spacing-lg);
+  color: var(--color-text-muted);
+  font-family: var(--font-family);
+  font-size: 14px;
+  text-decoration: underline;
+}
+
+.home-secondary-link:hover {
+  color: var(--color-text-primary);
+}

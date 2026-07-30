@@ -1,6 +1,32 @@
 require "test_helper"
 
 class LabImportsControllerTest < ActionDispatch::IntegrationTest
+  test "index lists imports with their filename and status" do
+    lab_import = LabImport.create!(status: :completed)
+    lab_import.file.attach(io: StringIO.new("data"), filename: "results.txt", content_type: "text/plain")
+    lab_import.save!
+
+    get lab_imports_url
+
+    assert_response :success
+    assert_match "results.txt", response.body
+    assert_select "span.status-pill", text: "Completed"
+  end
+
+  test "index paginates, showing at most one page of imports" do
+    per_page = LabImportsController::PER_PAGE
+    (per_page + 3).times { LabImport.create!(status: :completed) }
+
+    get lab_imports_url
+    assert_response :success
+    assert_select "tbody tr", count: per_page # first page is full
+    assert_select "nav.pagination"
+
+    get lab_imports_url(page: 2)
+    assert_response :success
+    assert_select "tbody tr", count: 3 # remainder on page 2
+  end
+
   test "new renders the upload form" do
     get new_lab_import_url
     assert_response :success

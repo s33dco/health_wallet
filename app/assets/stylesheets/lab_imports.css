@@ -40,6 +40,15 @@
   background: #f3f4f6;
 }
 
+/* Inline pill variant of the status colours, for the index table. */
+.status-pill {
+  display: inline-block;
+  padding: 2px 10px;
+  border-radius: 12px;
+  font-size: 13px;
+  background: #f3f4f6;
+}
+
 .status--pending,
 .status--processing {
   background: #fef9c3;
@@ -99,6 +108,55 @@
 .flagged-list {
   margin: 0;
   padding-left: 1.25rem;
+}
+
+.lab-import-header-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.lab-imports-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 1rem;
+}
+
+.lab-imports-table th,
+.lab-imports-table td {
+  padding: 10px 12px;
+  text-align: left;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.lab-imports-table th {
+  font-size: 13px;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  color: #6b7280;
+}
+
+.pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  margin-top: 1.25rem;
+}
+
+.pagination-link {
+  color: #2563eb;
+  text-decoration: none;
+}
+
+.pagination-link--disabled {
+  color: #9ca3af;
+}
+
+.pagination-status {
+  font-size: 14px;
+  color: #6b7280;
 }
 
 .flash-alert {
