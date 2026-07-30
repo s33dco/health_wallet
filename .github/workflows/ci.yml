@@ -93,7 +93,8 @@ jobs:
           RAILS_ENV: test
           MONGODB_URI: mongodb://localhost:27017/
         run: |
-          bin/rails db:seed 
+          bin/rails db:prepare
+          bin/rails db:seed
           bin/rails test
 
   system-test:
@@ -124,7 +125,8 @@ jobs:
           RAILS_ENV: test
           MONGODB_URI: mongodb://localhost:27017/
         run: |
-          bin/rails db:seed 
+          bin/rails db:prepare
+          bin/rails db:seed
           bin/rails test:system
 
       - name: Keep screenshots from failed system tests
