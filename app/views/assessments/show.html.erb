@@ -41,10 +41,37 @@
         </thead>
         <tbody>
           <% @observations.each do |observation| %>
+            <%# Embedded documents are stored and read back in insertion (creation) order,
+                so no explicit sort is needed — sorting by created_at alone would be
+                unstable for readings recorded within the same millisecond. %>
+            <% history = observation.observation_histories.to_a %>
             <tr>
               <td><%= observation.name %></td>
               <td><code><%= observation.code %></code></td>
-              <td><%= observation.value %></td>
+              <td>
+                <% if history.any? %>
+                  <details class="obs-history">
+                    <summary class="obs-value <%= "obs-value--changed" if history.size > 1 %>">
+                      <%= observation.value %>
+                      <span class="obs-history-badge" aria-label="<%= pluralize(history.size, "recorded reading") %>"><%= history.size %></span>
+                      <span class="obs-history-caret" aria-hidden="true">▸</span>
+                    </summary>
+                    <div class="obs-history-panel">
+                      <span class="obs-history-heading">Reading history</span>
+                      <ol class="obs-history-list">
+                        <% history.each do |reading| %>
+                          <li>
+                            <span class="obs-history-value"><%= reading.value %> <%= reading.units %></span>
+                            <span class="obs-history-meta"><%= reading.created_at.strftime("%d %b %Y, %H:%M") %><% if reading.source.present? %> · <%= reading.source %><% end %></span>
+                          </li>
+                        <% end %>
+                      </ol>
+                    </div>
+                  </details>
+                <% else %>
+                  <%= observation.value %>
+                <% end %>
+              </td>
               <td><%= observation.units %></td>
             </tr>
           <% end %>

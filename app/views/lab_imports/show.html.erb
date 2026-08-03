@@ -1,0 +1,51 @@
+<% if @lab_import.pending? || @lab_import.processing? %>
+  <%# Poll while the background job is still running; stop once it reaches a terminal state. %>
+  <% content_for :head do %>
+    <meta http-equiv="refresh" content="2">
+  <% end %>
+<% end %>
+
+<div class="lab-import">
+  <div class="lab-import-header">
+    <%= link_to "← Back to Lab Imports", lab_imports_path, class: "back-link" %>
+    <h1>Import Status</h1>
+  </div>
+
+  <p class="status status--<%= @lab_import.status %>">
+    Status: <strong><%= @lab_import.status.humanize %></strong>
+  </p>
+
+  <% if @lab_import.pending? || @lab_import.processing? %>
+    <p class="notice">This page refreshes automatically while the import runs…</p>
+  <% elsif @lab_import.failed? %>
+    <div class="flash-alert"><%= @lab_import.error_message %></div>
+  <% elsif @lab_import.duplicate? %>
+    <p class="notice">This file matches a previously completed import and was skipped, so no records were changed.</p>
+    <%= link_to "View Patients", patients_path, class: "btn btn-primary" %>
+  <% elsif @lab_import.completed? %>
+    <p class="notice">Import complete. The results are now on the patients' assessment pages.</p>
+
+    <% if @lab_import.summary.present? %>
+      <ul class="import-summary">
+        <% @lab_import.summary.each do |key, value| %>
+          <% next if key == "flagged" %>
+          <li><span class="import-summary-label"><%= key.to_s.humanize %>:</span> <%= value %></li>
+        <% end %>
+      </ul>
+
+      <% flagged = @lab_import.summary["flagged"] %>
+      <% if flagged.present? %>
+        <div class="flagged">
+          <p class="flagged-heading">⚠ Out-of-range results</p>
+          <ul class="flagged-list">
+            <% flagged.each do |result| %>
+              <li><%= result["name"] %>: <strong><%= result["value"] %> <%= result["units"] %></strong></li>
+            <% end %>
+          </ul>
+        </div>
+      <% end %>
+    <% end %>
+
+    <%= link_to "View Patients", patients_path, class: "btn btn-primary" %>
+  <% end %>
+</div>

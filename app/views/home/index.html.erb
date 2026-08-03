@@ -3,6 +3,11 @@
     <h1>Health Wallet</h1>
     <p>Manage patient records and assessments</p>
 
-    <%= link_to "View Patients", patients_path, class: "home-link" %>
+    <div class="home-actions">
+      <%= link_to "View Patients", patients_path, class: "home-link" %>
+      <%= link_to "Import Lab Results", new_lab_import_path, class: "home-link" %>
+    </div>
+
+    <%= link_to "View lab imports", lab_imports_path, class: "home-secondary-link" %>
   </div>
 </div>

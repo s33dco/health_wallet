@@ -78,3 +78,34 @@ patients_data.each do |patient_attrs|
 end
 
 puts "Created #{Patient.count} patients with #{Assessment.count} assessments and #{Assessment.all.sum { |a| a.observations.count }} observations."
+
+# --- Observation code reference data (LOINC) ---------------------------------------
+# The importer only creates observations whose code appears in this controlled list.
+# Seeded idempotently so it is safe to re-run without clobbering existing records.
+puts "Seeding observation codes..."
+
+OBSERVATION_CODES = {
+  "8480-6"  => { description: "Blood Pressure (Systolic)",  unit: "mmHg",        range: 90..180 },
+  "8462-4"  => { description: "Blood Pressure (Diastolic)", unit: "mmHg",        range: 60..120 },
+  "8867-4"  => { description: "Heart Rate",                 unit: "bpm",         range: 50..120 },
+  "8310-5"  => { description: "Body Temperature",           unit: "°C",          range: 36.0..39.0 },
+  "9279-1"  => { description: "Respiratory Rate",           unit: "breaths/min", range: 12..25 },
+  "2708-6"  => { description: "Oxygen Saturation",          unit: "%",           range: 92..100 },
+  "29463-7" => { description: "Body Weight",                unit: "kg",          range: 45..120 },
+  "8302-2"  => { description: "Body Height",                unit: "cm",          range: 150..200 },
+  "2339-0"  => { description: "Blood Glucose",              unit: "mg/dL",       range: 70..200 },
+  "2093-3"  => { description: "Cholesterol",                unit: "mg/dL",       range: 120..280 }
+}.freeze
+
+# Upsert (find_or_initialize + save) rather than find_or_create_by! so re-seeding refreshes
+# the unit/range on codes that already exist from an earlier run.
+OBSERVATION_CODES.each do |code, attrs|
+  oc = ObservationCode.find_or_initialize_by(code: code)
+  oc.description = attrs.fetch(:description) # raises clearly if a description is ever missing
+  oc.unit = attrs[:unit]
+  oc.min_value = attrs[:range]&.first # &. so a missing range yields nil, not a crash
+  oc.max_value = attrs[:range]&.last
+  oc.save!
+end
+
+puts "Seeded #{ObservationCode.count} observation codes."

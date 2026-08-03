@@ -4,6 +4,10 @@
     <h1>Edit Assessment <%= @assessment.reference %></h1>
   </div>
 
+  <% if flash.now[:alert] || flash[:alert] %>
+    <div class="flash-alert"><%= flash[:alert] %></div>
+  <% end %>
+
   <div class="assessment-info">
     <div class="info-item">
       <span class="info-label">Patient</span>

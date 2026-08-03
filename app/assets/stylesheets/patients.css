@@ -306,6 +306,102 @@
   background: var(--color-bg-hover);
 }
 
+/* Observation value with a click-to-expand reading-history disclosure (the audit trail).
+   A native <details>/<summary> is used deliberately: it expands inline (so it is never
+   clipped by the table's `overflow: hidden`), needs no JavaScript, and is keyboard- and
+   screen-reader accessible out of the box. */
+.obs-history {
+  display: inline-block;
+}
+
+.obs-value {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  cursor: pointer;
+  list-style: none;
+  outline: none;
+}
+
+/* Hide the default disclosure triangle in favour of our own caret. */
+.obs-value::-webkit-details-marker {
+  display: none;
+}
+
+.obs-value:focus-visible {
+  outline: 2px solid var(--color-header-bg);
+  outline-offset: 2px;
+  border-radius: 3px;
+}
+
+.obs-history-badge {
+  display: inline-block;
+  min-width: 16px;
+  padding: 0 5px;
+  margin-left: 4px;
+  border-radius: 8px;
+  background: var(--color-border);
+  color: var(--color-text-muted);
+  font-size: 11px;
+  line-height: 16px;
+  text-align: center;
+  vertical-align: middle;
+}
+
+/* A value recorded more than once gets a distinct badge so revisions stand out. */
+.obs-value--changed .obs-history-badge {
+  background: #fde68a;
+  color: #854d0e;
+}
+
+.obs-history-caret {
+  color: var(--color-text-light);
+  font-size: 10px;
+  transition: transform 0.12s ease;
+}
+
+.obs-history[open] .obs-history-caret {
+  transform: rotate(90deg);
+}
+
+.obs-history-panel {
+  margin-top: 8px;
+  padding: 10px 12px;
+  border-left: 3px solid var(--color-border);
+  background: var(--color-bg-hover);
+  border-radius: 4px;
+}
+
+.obs-history-heading {
+  display: block;
+  margin-bottom: 6px;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  color: var(--color-text-muted);
+}
+
+.obs-history-list {
+  margin: 0;
+  padding-left: 18px;
+}
+
+.obs-history-list li {
+  padding: 2px 0;
+}
+
+.obs-history-value {
+  font-weight: 600;
+  color: var(--color-text-primary);
+}
+
+.obs-history-meta {
+  margin-left: 8px;
+  font-size: 12px;
+  color: var(--color-text-muted);
+}
+
 .observations-table tbody tr:last-child td {
   border-bottom: none;
 }

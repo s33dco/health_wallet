@@ -1,0 +1,22 @@
+<div class="lab-import">
+  <div class="lab-import-header">
+    <%= link_to "← Back to Lab Imports", lab_imports_path, class: "back-link" %>
+    <h1>Upload Lab Results</h1>
+    <p class="lab-import-intro">
+      Upload a simplified HL7 lab-result file (<code>.txt</code>). The file is parsed in the
+      background and the results are added to the matching patients' assessments.
+    </p>
+  </div>
+
+  <% if flash.now[:alert] || flash[:alert] %>
+    <div class="flash-alert"><%= flash[:alert] %></div>
+  <% end %>
+
+  <%= form_with model: @lab_import, url: lab_imports_path, method: :post, html: { multipart: true } do |f| %>
+    <div class="form-row">
+      <%= f.label :file, "HL7 file" %>
+      <%= f.file_field :file, accept: ".txt,text/plain" %>
+    </div>
+    <%= f.submit "Upload", class: "btn btn-primary" %>
+  <% end %>
+</div>

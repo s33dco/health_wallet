@@ -1,0 +1,52 @@
+<div class="lab-import">
+  <div class="lab-import-header">
+    <%= link_to "← Back to Home", root_path, class: "back-link" %>
+    <div class="lab-import-header-row">
+      <h1>Lab Imports</h1>
+      <%= link_to "Upload new file", new_lab_import_path, class: "btn btn-primary" %>
+    </div>
+  </div>
+
+  <% if @lab_imports.any? %>
+    <table class="lab-imports-table">
+      <thead>
+        <tr>
+          <th>File</th>
+          <th>Status</th>
+          <th>Uploaded</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        <% @lab_imports.each do |lab_import| %>
+          <tr>
+            <td><%= lab_import.file.attached? ? lab_import.file.filename.to_s : "—" %></td>
+            <td>
+              <span class="status-pill status--<%= lab_import.status %>"><%= lab_import.status.humanize %></span>
+            </td>
+            <td><%= lab_import.created_at.strftime("%d %b %Y, %H:%M") %></td>
+            <td><%= link_to "View", lab_import_path(lab_import) %></td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+
+    <% if @total_pages > 1 %>
+      <nav class="pagination">
+        <% if @page > 1 %>
+          <%= link_to "← Previous", lab_imports_path(page: @page - 1), class: "pagination-link" %>
+        <% else %>
+          <span class="pagination-link pagination-link--disabled">← Previous</span>
+        <% end %>
+        <span class="pagination-status">Page <%= @page %> of <%= @total_pages %></span>
+        <% if @page < @total_pages %>
+          <%= link_to "Next →", lab_imports_path(page: @page + 1), class: "pagination-link" %>
+        <% else %>
+          <span class="pagination-link pagination-link--disabled">Next →</span>
+        <% end %>
+      </nav>
+    <% end %>
+  <% else %>
+    <p class="notice">No lab imports yet. <%= link_to "Upload one", new_lab_import_path %>.</p>
+  <% end %>
+</div>
