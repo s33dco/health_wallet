@@ -13,7 +13,7 @@ class Hl7LabResultParser
 
   Record           = Struct.new(:patient, :observations, keyword_init: true)
   PatientAttrs     = Struct.new(:name, :dob, :sex_at_birth, :assessment_reference, keyword_init: true)
-  ObservationAttrs = Struct.new(:code, :name, :value, :units, keyword_init: true)
+  ObservationAttrs = Struct.new(:code, :name, :value, :units, :observation_code, keyword_init: true)
 
   # HL7 files carry the single-letter code; the domain stores the full word.
   SEX_MAP = { "M" => "Male", "F" => "Female" }.freeze
@@ -72,6 +72,17 @@ class Hl7LabResultParser
     observation_code = ObservationCode.where(code: code).first
     raise ParseError, "Unknown observation code #{code.inspect} on line #{idx + 1}" unless observation_code
 
-    ObservationAttrs.new(code: code, name: observation_code.description, value: result.to_f, units: units)
+    value = parse_value(result, idx)
+    ObservationAttrs.new(code: code, name: observation_code.description, value: value, units: units,
+                          observation_code: observation_code)
+  end
+
+  # `to_f` would silently coerce a garbled result (e.g. "ERR", "") to 0.0; Float() raises on
+  # anything that isn't a genuine number, so a bad reading fails loud like every other
+  # malformed field instead of importing as a plausible-looking zero.
+  def parse_value(result, idx)
+    Float(result)
+  rescue ArgumentError, TypeError
+    raise ParseError, "Invalid observation result #{result.inspect} on line #{idx + 1}"
   end
 end

@@ -72,4 +72,26 @@ class AssessmentsControllerTest < ActionDispatch::IntegrationTest
 
     assert_equal 1, @assessment.reload.observations.first.observation_histories.count
   end
+
+  test "submitting a non-numeric value re-renders the edit form with an error instead of saving 0.0" do
+    observation = @assessment.observations.create!(code: "8480-6", name: "Blood Pressure (Systolic)")
+    observation.record_reading!(value: 120.0, units: "mmHg")
+
+    patch assessment_url(@assessment), params: {
+      assessment: { observations_attributes: { "0" => { id: observation.id.to_s, value: "not-a-number", units: "mmHg" } } }
+    }
+
+    assert_response :unprocessable_entity
+    assert_select ".flash-alert", text: /Invalid value/
+    assert_equal 120.0, @assessment.reload.observations.first.value
+  end
+
+  test "submitting a stale observation id re-renders the edit form instead of raising" do
+    patch assessment_url(@assessment), params: {
+      assessment: { observations_attributes: { "0" => { id: "not-a-real-id", value: "120", units: "mmHg" } } }
+    }
+
+    assert_response :unprocessable_entity
+    assert_select ".flash-alert"
+  end
 end

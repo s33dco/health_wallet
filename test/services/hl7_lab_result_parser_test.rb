@@ -105,4 +105,17 @@ class Hl7LabResultParserTest < ActiveSupport::TestCase
 
     assert_raises(Hl7LabResultParser::ParseError) { Hl7LabResultParser.parse(content) }
   end
+
+  test "raises on a non-numeric observation result instead of silently coercing to 0.0" do
+    content = "John Doe|1985-03-15|M|REF-2024-001\n8480-6|ERR|mmHg\n"
+
+    error = assert_raises(Hl7LabResultParser::ParseError) { Hl7LabResultParser.parse(content) }
+    assert_match(/Invalid observation result/, error.message)
+  end
+
+  test "raises on a blank observation result" do
+    content = "John Doe|1985-03-15|M|REF-2024-001\n8480-6||mmHg\n"
+
+    assert_raises(Hl7LabResultParser::ParseError) { Hl7LabResultParser.parse(content) }
+  end
 end

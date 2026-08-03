@@ -84,4 +84,17 @@ class LabResultImportJobTest < ActiveSupport::TestCase
 
     assert_match(/"event":"import_parse_error"/, logs)
   end
+
+  test "a concurrent import of the same file (still processing, not yet completed) is marked duplicate rather than double-processed" do
+    content = "John Doe|1985-03-15|M|REF-2024-001\n8480-6|120|mmHg\n"
+    checksum = Digest::SHA256.hexdigest(content)
+    # Simulates another worker that already claimed this checksum and is mid-import.
+    LabImport.create!(status: :processing, file_checksum: checksum)
+
+    racing_import = lab_import_with(content)
+    LabResultImportJob.perform_now(racing_import.id)
+
+    assert racing_import.reload.duplicate?
+    assert_equal 0, Patient.count # the racing import never ran Import::Processor
+  end
 end

@@ -18,7 +18,16 @@ class LabResultImportJob < ApplicationJob
       return
     end
 
-    lab_import.mark_processing!
+    begin
+      lab_import.mark_processing!
+    rescue ActiveRecord::RecordNotUnique
+      # Another import with the same checksum won the race to start processing first (the
+      # `duplicate_of` check above only sees *completed* imports, so it can't catch two still
+      # in flight). The partial unique index on lab_imports lets exactly one of them through.
+      log(:info, event: "duplicate_import_detected", lab_import_id: lab_import.id, checksum: lab_import.file_checksum)
+      lab_import.mark_duplicate!
+      return
+    end
 
     result = Import::Processor.new(content).call
 

@@ -100,6 +100,23 @@ class LabImportTest < ActiveSupport::TestCase
     assert lab_import.reload.duplicate?
   end
 
+  # --- concurrency: the partial unique index on file_checksum ---
+
+  test "the database rejects a second import claiming the same checksum while one is already processing" do
+    LabImport.create!(status: :processing, file_checksum: "abc123")
+    second = LabImport.create!(status: :pending, file_checksum: "abc123")
+
+    assert_raises(ActiveRecord::RecordNotUnique) { second.mark_processing! }
+  end
+
+  test "a failed import does not block a later import from claiming the same checksum" do
+    LabImport.create!(status: :failed, file_checksum: "abc123")
+    second = LabImport.create!(status: :pending, file_checksum: "abc123")
+
+    assert_nothing_raised { second.mark_processing! }
+    assert second.reload.processing?
+  end
+
   test "accepts an attached file" do
     lab_import = LabImport.new
     lab_import.file.attach(io: StringIO.new("John Doe|1985-03-15|M|REF-1\n"), filename: "labs.txt", content_type: "text/plain")

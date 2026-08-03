@@ -67,10 +67,10 @@ module Import
     end
 
     # Flag readings outside the code's reference range, but still import them — an
-    # out-of-range value is clinically interesting, not invalid.
+    # out-of-range value is clinically interesting, not invalid. Reuses the ObservationCode
+    # the parser already fetched rather than re-querying it here.
     def flag_if_out_of_range(obs)
-      observation_code = ObservationCode.where(code: obs.code).first
-      return unless observation_code&.out_of_range?(obs.value, unit: obs.units)
+      return unless obs.observation_code&.out_of_range?(obs.value, unit: obs.units)
 
       @flagged << { code: obs.code, name: obs.name, value: obs.value, units: obs.units }
     end

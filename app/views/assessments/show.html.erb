@@ -41,7 +41,10 @@
         </thead>
         <tbody>
           <% @observations.each do |observation| %>
-            <% history = observation.observation_histories.sort_by(&:created_at) %>
+            <%# Embedded documents are stored and read back in insertion (creation) order,
+                so no explicit sort is needed — sorting by created_at alone would be
+                unstable for readings recorded within the same millisecond. %>
+            <% history = observation.observation_histories.to_a %>
             <tr>
               <td><%= observation.name %></td>
               <td><code><%= observation.code %></code></td>
